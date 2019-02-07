@@ -35,8 +35,26 @@ onConfigRead = (error, config) ->
       console.log "FIREWALL", firewall
     , 1000
 
+  websocket.sockets.on "connection", (socket) ->
+    socket.on "message", (msg) ->
+      buf = Buffer.from msg
+      address = socket.handshake.address.address
+      try
+        console.log "socket.io packet", buf
+        cmds = packetParse buf
+      catch e
+        # TODO: catch only parse errors
+        websocket.sockets.volatile.emit "parseError",
+          error: e.message
+          address: address
+
+        # Failed to parse the packet. We cannot continue from here at all.
+        return
+      handleCmds cmds, address
+
   udpserver.on "message", (packet, rinfo) ->
     try
+      console.log "UDP packet", packet
       cmds = packetParse packet
     catch e
       # TODO: catch only parse errors
@@ -46,11 +64,13 @@ onConfigRead = (error, config) ->
 
       # Failed to parse the packet. We cannot continue from here at all.
       return
+    handleCmds cmds, rinfo.address
 
+  handleCmds = (cmds, address) ->
     results =
       # Packet starts as anonymous always
       tag: "anonymous"
-      address: rinfo.address
+      address: address
       cmds: []
 
     for cmd in cmds

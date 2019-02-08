@@ -1,0 +1,47 @@
+//English commented webclient example
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    Very simplistic and spartan example, that sends a light command when this page is loaded.
+  </body>
+  <script>
+    // Example message based on examples/python.py
+    var packet = new Uint8Array([
+      1, // Specification version, always 1
+      0, // Nick tag
+      101, // e
+      112, // p
+      101, // e
+      108, // l
+      105, // i
+      0, // Nick end
+      
+      // First effect command
+      1, // Effect type is 1, a light.
+      0, // First light fixture at index 0.
+      0, // Extension byte. Always 0.
+      255, // Red to maximum value
+      0, // Green to minimum value
+      0, // Blue to minimum value
+      
+      // Another effect command
+      1, // This effect type is also 1, a light.
+      1, // Second light fixture at index 1.
+      0, // Extension byte. Always 0.
+      // RGB values as previously
+      0,
+      255,
+      0,
+      
+      // Add as many effect commands as you desire!
+    ]);
+    var socket = io.connect('http://localhost:8080/');
+    socket.on('connect', function () {
+      socket.emit('message', Array.prototype.slice.call(packet));
+    });
+  </script>
+</html>
